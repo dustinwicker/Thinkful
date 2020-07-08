@@ -3,9 +3,6 @@ import numpy as np
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-### Objective ###
-
-
 # Increase maximum width in characters of columns - will put all columns in same line in console readout
 pd.set_option('expand_frame_repr', False)
 # Be able to read entire value in each column (no longer truncating values)
@@ -15,6 +12,8 @@ pd.set_option('display.max_rows', 200)
 
 # Webdriver options
 options = Options()
+# # Make call to Chrome
+# options.add_argument('--headless')
 # Define Chrome webdriver for site
 driver = webdriver.Chrome(options=options)
 # Define url
@@ -28,19 +27,22 @@ driver.get(url=url)
 ### on the website and see their information
 
 # Obtain vehicle information for each of the displayed Mustangs
-cars = driver.find_elements_by_xpath("//div[@class='vehicleTile section']")
+cars = driver.find_elements(by='xpath', value="//div[@class='vehicleTile section']")
+# Observe the web elements obtained
+cars
 
 # Lets observe the first car
-cars[0].text
 first_car = cars[0].text
-# Print type
-print(type(first_car))
-# Lets split on the new line (\n) since it separates the various pieces of information
+# Print first_car
+first_car
+# Print type of first_car
+type(first_car)
+# Lets split on the new line (\n) since it separates the various pieces of information of interest
 first_car = first_car.split("\n")
 # Print type
-print(type(first_car))
+type(first_car)
 
-### Lets get all of our desired information from the first car - year, car model, price, city mpg, hwy mpg, lease/mo
+# Lets get all of our desired information from the first car - year, car model, price, city mpg, hwy mpg, lease/mo
 
 # year
 first_car[0][0:4]
@@ -68,7 +70,7 @@ first_car[3][first_car[3].index('$'):first_car[3].index('$')+4]
 # lease/mo
 first_car[3][first_car[3].index('$'):first_car[3].index('$')+4].replace("$", "")
 
-# Lets apply these above methodologies to all cars extracted from the website to get their specific information
+# Lets apply the above methodologies to all cars extracted from the website to get their specific information
 # Use an empty list to capture the results
 car_results_list = []
 for i in range(len(cars)):
@@ -102,10 +104,26 @@ for i in range(len(cars)):
     car_results_list.append(specific_car_info_list)
 
 # Now we have a list of lists - each specific list contains information for one car
-print(car_results_list)
+car_results_list
 # Notice the first element in the list corresponds to the first car
-print(car_results_list[0])
+car_results_list[0]
 
-# Convert lists of lists to DataFrame
+# Convert list of lists to DataFrame
 cars_df = pd.DataFrame(data=car_results_list, columns=['year', 'car_name', 'price', 'city_mpg', 'hwy_mpg', 'lease_mo'])
+cars_df
+
+# Remove all non-ASCII characters to make string easier to work with
+# Dictionary to detect non-ASCII characters
+find = dict.fromkeys(range(128), '')
+# Get a list of all non-ascii characters in car_name column
+non_ascii_characters_list = []
+for car in cars_df['car_name']:
+    for letter in list(car):
+        if letter.translate(find):
+            if letter.translate(find) not in non_ascii_characters_list:
+                non_ascii_characters_list.append(letter.translate(find))
+for symbol in non_ascii_characters_list:
+    for index, value in enumerate(cars_df['car_name']):
+        cars_df.loc[index]['car_name'] = cars_df.loc[index]['car_name'].replace(symbol, '')
+
 print(cars_df)
